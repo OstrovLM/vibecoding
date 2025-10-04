@@ -9,6 +9,9 @@
 <body>
     <!-- Приветственный экран -->
     <div id="welcome-screen" class="screen active">
+        <div class="theme-switcher">
+            <button id="theme-btn" class="theme-btn" title="Переключить тему">🌙</button>
+        </div>
         <div class="welcome-container">
             <div class="game-logo">
                 <img src="pupalupa.png" alt="Пупа и Лупа" class="logo-image">
@@ -31,6 +34,13 @@
             </div>
             <div class="game-instructions">
                 <p id="instruction-text">Нажмите кнопку когда увидите технологию!</p>
+                <div class="game-rules">
+                    <p><strong>Правила:</strong></p>
+                    <p>• Фронтенд-технологии → "За Пупу"</p>
+                    <p>• Бэкенд-технологии → "За Лупу"</p>
+                    <p>• "Премия" → нажимайте обе кнопки!</p>
+                    <p>• Неправильный ответ = -5 очков</p>
+                </div>
             </div>
         </div>
 
@@ -45,6 +55,16 @@
                 <div class="btn-text">За Лупу</div>
                 <div class="btn-subtitle">Бэкенд</div>
             </button>
+            <button id="trap-btn" class="action-btn trap-btn">
+                <div class="btn-icon">🤔</div>
+                <div class="btn-text">За Пупу?</div>
+                <div class="btn-subtitle">Ловушка!</div>
+            </button>
+        </div>
+        
+        <!-- Всплывающие комментарии -->
+        <div id="comment-bubble" class="comment-bubble">
+            <div class="comment-text" id="comment-text">Привет!</div>
         </div>
 
         <div class="game-footer">
@@ -68,6 +88,13 @@
             <div class="result-status">
                 <span id="result-message">Хорошая работа!</span>
             </div>
+            <div class="leaderboard">
+                <h3>🏆 Лучшие результаты</h3>
+                <div id="leaderboard-list" class="leaderboard-list">
+                    <!-- Список результатов будет заполнен JavaScript -->
+                </div>
+            </div>
+            
             <div class="result-actions">
                 <button id="play-again-btn" class="play-again-btn">🔄 Сыграть ещё</button>
                 <button id="back-to-menu-btn" class="back-btn">🏠 В меню</button>
