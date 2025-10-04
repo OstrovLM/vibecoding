@@ -333,8 +333,20 @@ body.acid-theme {
     background: linear-gradient(45deg, #667eea, #764ba2);
 }
 
+.pupa-btn .btn-icon {
+    filter: brightness(1.5) contrast(1.2); /* Белый волк */
+    text-shadow: 0 0 10px rgba(255,255,255,0.5);
+    animation: whiteWolfGlow 3s ease-in-out infinite;
+}
+
 .lupa-btn {
     background: linear-gradient(45deg, #f093fb, #f5576c);
+}
+
+.lupa-btn .btn-icon {
+    filter: brightness(0.3) contrast(1.5); /* Черный волк */
+    text-shadow: 0 0 10px rgba(0,0,0,0.5);
+    animation: blackWolfGlow 3s ease-in-out infinite;
 }
 
 .trap-btn {
@@ -651,5 +663,28 @@ body.acid-theme {
     .action-btn {
         min-height: 60px;
         font-size: 0.9rem;
+    }
+}
+
+/* Анимации волков */
+@keyframes whiteWolfGlow {
+    0%, 100% { 
+        transform: scale(1);
+        filter: brightness(1.5) contrast(1.2);
+    }
+    50% { 
+        transform: scale(1.1);
+        filter: brightness(2) contrast(1.5);
+    }
+}
+
+@keyframes blackWolfGlow {
+    0%, 100% { 
+        transform: scale(1);
+        filter: brightness(0.3) contrast(1.5);
+    }
+    50% { 
+        transform: scale(1.1);
+        filter: brightness(0.5) contrast(2);
     }
 }
