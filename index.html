@@ -10,8 +10,68 @@
     <!-- Приветственный экран -->
     <div id="welcome-screen" class="screen active">
         <div class="welcome-container">
+            <div class="game-logo">
+                <img src="pupalupa.png" alt="Пупа и Лупа" class="logo-image">
+            </div>
             <h1 class="game-title">🚀 Невероятные приключения Пупы и Лупы</h1>
             <button id="start-game-btn" class="start-btn">🎮 Начать игру</button>
+        </div>
+    </div>
+
+    <!-- Игровой экран -->
+    <div id="game-screen" class="screen">
+        <div class="game-header">
+            <div class="score">💰 <span id="score">0</span></div>
+            <div class="timer">⏱️ <span id="timer">10</span>с</div>
+        </div>
+        
+        <div class="game-center">
+            <div id="tech-badge" class="tech-badge">
+                <span id="tech-text">Готов?</span>
+            </div>
+            <div class="game-instructions">
+                <p id="instruction-text">Нажмите кнопку когда увидите технологию!</p>
+            </div>
+        </div>
+
+        <div class="game-controls">
+            <button id="pupa-btn" class="action-btn pupa-btn">
+                <div class="btn-icon">👨‍💻</div>
+                <div class="btn-text">За Пупу</div>
+                <div class="btn-subtitle">Фронтенд</div>
+            </button>
+            <button id="lupa-btn" class="action-btn lupa-btn">
+                <div class="btn-icon">👩‍💻</div>
+                <div class="btn-text">За Лупу</div>
+                <div class="btn-subtitle">Бэкенд</div>
+            </button>
+        </div>
+
+        <div class="game-footer">
+            <div class="combo-display">
+                <span id="combo-text">Комбо: <span id="combo-count">0</span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Экран результатов -->
+    <div id="result-screen" class="screen">
+        <div class="result-container">
+            <h2>🎉 Игра окончена!</h2>
+            <div class="final-score">
+                <div class="score-display">
+                    <span class="score-label">Заработано:</span>
+                    <span id="final-score" class="score-value">0</span>
+                    <span class="currency">💰</span>
+                </div>
+            </div>
+            <div class="result-status">
+                <span id="result-message">Хорошая работа!</span>
+            </div>
+            <div class="result-actions">
+                <button id="play-again-btn" class="play-again-btn">🔄 Сыграть ещё</button>
+                <button id="back-to-menu-btn" class="back-btn">🏠 В меню</button>
+            </div>
         </div>
     </div>
 
