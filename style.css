@@ -355,6 +355,10 @@ body.acid-theme {
     display: none; /* Скрыта по умолчанию */
 }
 
+.trap-btn .btn-icon {
+    animation: bananaBounce 1.5s ease-in-out infinite;
+}
+
 @keyframes trapPulse {
     0%, 100% { 
         transform: scale(1);
@@ -366,9 +370,22 @@ body.acid-theme {
     }
 }
 
+@keyframes bananaBounce {
+    0%, 100% { 
+        transform: rotate(0deg) scale(1);
+    }
+    25% { 
+        transform: rotate(-10deg) scale(1.1);
+    }
+    75% { 
+        transform: rotate(10deg) scale(1.1);
+    }
+}
+
 .trap-btn.visible {
     display: flex;
 }
+
 
 .action-btn:active {
     transform: scale(0.95);
