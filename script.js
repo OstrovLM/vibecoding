@@ -3,34 +3,46 @@ class Game {
     constructor() {
         this.score = 0;
         this.combo = 0;
-        this.timeLeft = 10;
+        this.timeLeft = 20;
         this.gameActive = false;
         this.currentTech = null;
         this.techInterval = null;
         this.timerInterval = null;
-        this.premiumActive = false;
-        this.premiumButtonsPressed = new Set();
-        this.premiumInterval = null;
-        this.hasShownPremium = false;
         this.isAcidTheme = false;
-        this.trapButtonVisible = false;
         this.commentTimeout = null;
         this.leaderboard = this.loadLeaderboard();
         
-        // Списки технологий
-        this.frontendTechs = [
-            'React', 'Vue', 'Angular', 'JavaScript', 'TypeScript', 
-            'HTML', 'CSS', 'SASS', 'Webpack', 'Vite', 'Next.js', 
-            'Nuxt.js', 'Tailwind', 'Bootstrap', 'jQuery'
+        // Списки увлечений
+        this.femaleInterests = [
+            'Дэн', 'театр', 'вокал', 'Бэбэ', 'джимник', 
+            'инглиш мазафака ду ю спик ит?!', 'а яблочный спас', 
+            'Леди Гага', 'сырные шарики', 'любовь и голуби'
         ];
         
-        this.backendTechs = [
-            'Node.js', 'Python', 'Java', 'C#', 'PHP', 'Go', 'Rust',
-            'Django', 'Flask', 'Express', 'Spring', 'Laravel', 
-            'PostgreSQL', 'MongoDB', 'Redis', 'Docker'
+        this.maleInterests = [
+            'рыбалка', 'кулинария', 'Лада', 'дрон', 'сиденье унитаза', 
+            'шоколад', 'пряники со сгущенкой', 'фотоаппарат', 
+            'газон', 'предлог "за"', 'худи', 'красная шапка'
         ];
         
-        this.allTechs = [...this.frontendTechs, ...this.backendTechs];
+        // Общие слова (можно нажимать обе кнопки одновременно)
+        this.commonWords = [
+            'Камчатка', 'Дагестан', 'Карелия', 'Териберка', 'Байкал', 'гранат'
+        ];
+        
+        // Запрещенные слова
+        this.forbiddenWords = [
+            'мариванна', 'белый', 'шишка'
+        ];
+        
+        this.allInterests = [...this.femaleInterests, ...this.maleInterests, ...this.commonWords];
+        this.gameOver = false;
+        this.commonWordButtonsPressed = new Set(); // Для отслеживания нажатий на общие слова
+        this.commonWordTimeout = null;
+        this.forbiddenWordTimer = null; // Таймер для запрещенных слов
+        this.waitingForChoice = false; // Ожидание выбора перед показом следующего
+        this.shownWords = new Set(); // Отслеживание показанных слов
+        this.availableWords = [...this.allInterests, ...this.forbiddenWords]; // Все доступные слова
         
         this.init();
     }
@@ -51,9 +63,14 @@ class Game {
     }
     
     bindEvents() {
-        // Кнопка старта игры
+        // Кнопка старта игры (показывает игровой экран)
         document.getElementById('start-game-btn').addEventListener('click', () => {
-            this.startGame();
+            this.showGameScreen();
+        });
+        
+        // Кнопка "Поехали!" (начинает игру)
+        document.getElementById('start-ready-btn').addEventListener('click', () => {
+            this.startReadyGame();
         });
         
         // Переключатель темы
@@ -62,17 +79,17 @@ class Game {
         });
         
         // Кнопки действий
-        document.getElementById('pupa-btn').addEventListener('click', () => {
-            this.makeChoice('frontend');
+        document.getElementById('lada-btn').addEventListener('click', () => {
+            this.makeChoice('female');
         });
         
-        document.getElementById('lupa-btn').addEventListener('click', () => {
-            this.makeChoice('backend');
+        document.getElementById('denis-btn').addEventListener('click', () => {
+            this.makeChoice('male');
         });
         
-        // Кнопка-ловушка
-        document.getElementById('trap-btn').addEventListener('click', () => {
-            this.trapButtonClicked();
+        // Кнопка "Осуждаем!"
+        document.getElementById('judge-btn').addEventListener('click', () => {
+            this.makeChoice('judge');
         });
         
         // Кнопки результатов
@@ -91,74 +108,152 @@ class Game {
         document.getElementById('result-screen').classList.remove('active');
     }
     
-    startGame() {
-        this.score = 0;
-        this.combo = 0;
-        this.timeLeft = 10;
-        this.gameActive = true;
-        
+    showGameScreen() {
         // Показать игровой экран
         document.getElementById('welcome-screen').classList.remove('active');
         document.getElementById('game-screen').classList.add('active');
         document.getElementById('result-screen').classList.remove('active');
+        
+        // Показать кнопку "Поехали!" и скрыть badge
+        document.getElementById('start-ready-btn-container').style.display = 'block';
+        document.getElementById('tech-badge').style.display = 'none';
+        
+        // Сбросить состояние
+        this.score = 0;
+        this.combo = 0;
+        this.timeLeft = 20;
+        this.gameActive = false;
+        this.gameOver = false;
+        this.currentTech = null;
         
         // Обновить UI
         this.updateScore();
         this.updateTimer();
         this.updateCombo();
         
-        // Начать показ технологий
+        // Показать инструкции
+        document.getElementById('instruction-text').textContent = 'Нажмите "Поехали!" чтобы начать!';
+    }
+    
+    startReadyGame() {
+        // Остановить все интервалы если они есть
+        if (this.techInterval) {
+            clearInterval(this.techInterval);
+            this.techInterval = null;
+        }
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+        }
+        
+        this.score = 0;
+        this.combo = 0;
+        this.timeLeft = 20;
+        this.gameActive = true;
+        this.gameOver = false;
+        this.currentTech = null;
+        this.shownWords.clear(); // Сбросить список показанных слов
+        
+        // Скрыть кнопку "Поехали!" и показать badge
+        document.getElementById('start-ready-btn-container').style.display = 'none';
+        document.getElementById('tech-badge').style.display = 'flex';
+        
+        // Обновить UI
+        this.updateScore();
+        this.updateTimer();
+        this.updateCombo();
+        
+        // Сбросить badge
+        document.getElementById('tech-text').textContent = 'Готов?';
+        document.getElementById('tech-badge').classList.remove('forbidden', 'premium');
+        
+        // Начать показ увлечений
         this.startTechDisplay();
         
         // Запустить таймер
         this.startTimer();
         
         // Показать инструкции
-        document.getElementById('instruction-text').textContent = 'Нажмите кнопку когда увидите технологию!';
+        document.getElementById('instruction-text').textContent = 'Выберите правильное увлечение!';
         
-        // Скрыть кнопку-ловушку
-        this.hideTrapButton();
+        // Показать таблицу лидеров
+        const leaderboard = document.querySelector('.leaderboard');
+        if (leaderboard) {
+            leaderboard.style.display = 'block';
+        }
+    }
+    
+    startGame() {
+        // Алиас для совместимости
+        this.showGameScreen();
     }
     
     startTechDisplay() {
-        // Показать первую технологию сразу
-        this.showRandomTech();
+        // Очистить предыдущий интервал если есть
+        if (this.techInterval) {
+            clearInterval(this.techInterval);
+        }
         
-        // Показывать новые технологии каждые 0.7-1.2 секунды
-        this.techInterval = setInterval(() => {
-            if (this.gameActive) {
-                this.showRandomTech();
-                // Иногда показывать кнопку-ловушку
-                this.showTrapButton();
-            }
-        }, Math.random() * 500 + 700); // 0.7-1.2 секунды
+        // Показать первое увлечение сразу
+        this.showRandomInterest();
+        
+        // НЕ запускаем автоматический интервал - увлечения будут меняться только после выбора
     }
     
-    showRandomTech() {
+    showRandomInterest() {
         const techBadge = document.getElementById('tech-badge');
         const techText = document.getElementById('tech-text');
         
-        // Гарантировать хотя бы одну премию за сессию
-        let shouldShowPremium = false;
-        if (!this.hasShownPremium && (Math.random() < 0.15 || this.timeLeft <= 3)) {
-            shouldShowPremium = true;
-            this.hasShownPremium = true;
+        // Очистить таймер запрещенного слова если есть
+        if (this.forbiddenWordTimer) {
+            clearTimeout(this.forbiddenWordTimer);
+            this.forbiddenWordTimer = null;
         }
         
-        if (shouldShowPremium) {
-            this.currentTech = 'Премия';
-            this.premiumActive = true;
-            this.premiumButtonsPressed.clear();
-            techBadge.classList.add('premium');
-            this.startPremiumMode();
-        } else {
-            this.currentTech = this.allTechs[Math.floor(Math.random() * this.allTechs.length)];
-            this.premiumActive = false;
+        // Получить доступные слова (не показанные ранее)
+        const availableForbidden = this.forbiddenWords.filter(word => !this.shownWords.has(word));
+        const availableInterests = this.allInterests.filter(word => !this.shownWords.has(word));
+        
+        // Если все слова показаны, сбросить список
+        if (availableForbidden.length === 0 && availableInterests.length === 0) {
+            this.shownWords.clear();
+            availableForbidden.push(...this.forbiddenWords);
+            availableInterests.push(...this.allInterests);
+        }
+        
+        // 15% шанс на запрещенное слово (если есть доступные)
+        if (availableForbidden.length > 0 && Math.random() < 0.15) {
+            const randomIndex = Math.floor(Math.random() * availableForbidden.length);
+            this.currentTech = availableForbidden[randomIndex];
+            this.shownWords.add(this.currentTech);
+            techBadge.classList.add('forbidden');
             techBadge.classList.remove('premium');
-            this.stopPremiumMode();
+            
+            // Запустить таймер на 3 секунды для запрещенного слова
+            this.forbiddenWordTimer = setTimeout(() => {
+                if (this.gameActive && !this.gameOver && this.currentTech && 
+                    this.forbiddenWords.includes(this.currentTech.toLowerCase())) {
+                    // Время вышло - проигрыш
+                    this.gameOver = true;
+                    this.endGameWithLoss();
+                }
+            }, 3000);
+        } else if (availableInterests.length > 0) {
+            // Показываем обычное увлечение (случайное, но не показанное ранее)
+            const randomIndex = Math.floor(Math.random() * availableInterests.length);
+            this.currentTech = availableInterests[randomIndex];
+            this.shownWords.add(this.currentTech);
+            techBadge.classList.remove('forbidden');
+            techBadge.classList.remove('premium');
+        } else {
+            // Если нет доступных слов, показать случайное
+            this.currentTech = this.allInterests[Math.floor(Math.random() * this.allInterests.length)];
+            techBadge.classList.remove('forbidden');
+            techBadge.classList.remove('premium');
         }
         
         techText.textContent = this.currentTech;
+        this.waitingForChoice = true; // Теперь ждем выбора
         
         // Анимация появления
         techBadge.style.animation = 'none';
@@ -167,98 +262,147 @@ class Game {
         }, 10);
     }
     
-    startPremiumMode() {
-        // Обновить инструкции для премии
-        document.getElementById('instruction-text').textContent = 'Нажимайте обе кнопки поочередно!';
-        
-        // Запустить интервал для премии (каждые 0.5 секунды)
-        this.premiumInterval = setInterval(() => {
-            if (this.premiumActive && this.gameActive) {
-                this.processPremiumInput();
-            }
-        }, 500);
-    }
-    
-    stopPremiumMode() {
-        if (this.premiumInterval) {
-            clearInterval(this.premiumInterval);
-            this.premiumInterval = null;
-        }
-        document.getElementById('instruction-text').textContent = 'Нажмите кнопку когда увидите технологию!';
-    }
-    
-    processPremiumInput() {
-        // Проверяем, нажаты ли обе кнопки
-        if (this.premiumButtonsPressed.has('frontend') && this.premiumButtonsPressed.has('backend')) {
-            // Дать очки за правильное нажатие обеих кнопок
-            this.score += 30;
-            this.combo += 1;
-            this.updateScore();
-            this.updateCombo();
-            
-            // Сбросить состояние
-            this.premiumButtonsPressed.clear();
-            
-            // Визуальная обратная связь
-            document.getElementById('pupa-btn').classList.add('correct');
-            document.getElementById('lupa-btn').classList.add('correct');
-            setTimeout(() => {
-                document.getElementById('pupa-btn').classList.remove('correct');
-                document.getElementById('lupa-btn').classList.remove('correct');
-            }, 300);
-        }
-    }
-    
     makeChoice(choice) {
-        if (!this.gameActive || !this.currentTech) return;
+        if (!this.gameActive || !this.currentTech || this.gameOver) return;
         
-        const pupaBtn = document.getElementById('pupa-btn');
-        const lupaBtn = document.getElementById('lupa-btn');
+        const ladaBtn = document.getElementById('lada-btn');
+        const denisBtn = document.getElementById('denis-btn');
+        const judgeBtn = document.getElementById('judge-btn');
+        
+        const isForbidden = this.forbiddenWords.includes(this.currentTech.toLowerCase());
+        const isFemale = this.femaleInterests.includes(this.currentTech);
+        const isMale = this.maleInterests.includes(this.currentTech);
+        const isCommon = this.commonWords.includes(this.currentTech);
         
         let isCorrect = false;
         let points = 0;
+        let shouldGameOver = false;
         
-        if (this.premiumActive) {
-            // В режиме премии запоминаем нажатые кнопки
-            this.premiumButtonsPressed.add(choice);
-            return; // Не обрабатываем сразу, ждем обе кнопки
-        } else {
-            // Обычная логика для технологий
-            const isFrontend = this.frontendTechs.includes(this.currentTech);
-            const isBackend = this.backendTechs.includes(this.currentTech);
+        // Проверка на запрещенные слова
+        if (isForbidden) {
+            // Очистить таймер запрещенного слова
+            if (this.forbiddenWordTimer) {
+                clearTimeout(this.forbiddenWordTimer);
+                this.forbiddenWordTimer = null;
+            }
             
-            if ((choice === 'frontend' && isFrontend) || (choice === 'backend' && isBackend)) {
+            if (choice === 'judge') {
+                // Правильно нажали "Осуждаем!"
                 isCorrect = true;
-                points = 10 + (this.combo * 5); // Базовые очки + бонус за комбо
+                points = 20; // Бонус за правильное осуждение
                 this.combo += 1;
+                // Показать следующее слово после правильного осуждения
+                this.waitingForChoice = false;
+                setTimeout(() => {
+                    if (this.gameActive && !this.gameOver) {
+                        this.showRandomInterest();
+                    }
+                }, 500);
             } else {
+                // Неправильно - сразу проигрыш
+                shouldGameOver = true;
                 isCorrect = false;
-                this.combo = 0; // Сброс комбо при ошибке
-                // Штраф за неправильное нажатие
+            }
+        } else if (isCommon) {
+            // Общие слова - можно нажимать обе кнопки одновременно
+            if (choice === 'female' || choice === 'male') {
+                this.commonWordButtonsPressed.add(choice);
+                
+                // Проверяем, нажаты ли обе кнопки в течение 0.5 секунды
+                if (this.commonWordButtonsPressed.has('female') && this.commonWordButtonsPressed.has('male')) {
+                    // Обе кнопки нажаты - двойной бонус!
+                    isCorrect = true;
+                    points = (10 + (this.combo * 5)) * 2; // Двойной бонус
+                    this.combo += 1;
+                    
+                    // Сбросить состояние
+                    this.commonWordButtonsPressed.clear();
+                    if (this.commonWordTimeout) {
+                        clearTimeout(this.commonWordTimeout);
+                        this.commonWordTimeout = null;
+                    }
+                } else {
+                    // Только одна кнопка - ждем вторую
+                    isCorrect = true;
+                    points = 10 + (this.combo * 5); // Обычный бонус
+                    this.combo += 1;
+                    
+                    // Установить таймаут для сброса
+                    if (this.commonWordTimeout) {
+                        clearTimeout(this.commonWordTimeout);
+                    }
+                    this.commonWordTimeout = setTimeout(() => {
+                        this.commonWordButtonsPressed.clear();
+                    }, 500);
+                }
+            } else if (choice === 'judge') {
+                // Нажали "Осуждаем!" на общее слово - штраф
+                isCorrect = false;
+                this.score = Math.max(0, this.score - 10);
+                this.combo = 0;
+                this.commonWordButtonsPressed.clear();
+                // Показать следующее слово после штрафа
+                this.waitingForChoice = false;
+                setTimeout(() => {
+                    if (this.gameActive && !this.gameOver) {
+                        this.showRandomInterest();
+                    }
+                }, 500);
+            }
+        } else {
+            // Обычные увлечения
+            this.commonWordButtonsPressed.clear(); // Сбросить для обычных слов
+            if ((choice === 'female' && isFemale) || (choice === 'male' && isMale)) {
+                isCorrect = true;
+                points = 10 + (this.combo * 5);
+                this.combo += 1;
+            } else if (choice === 'judge') {
+                // Нажали "Осуждаем!" на обычное увлечение - штраф
+                isCorrect = false;
+                this.score = Math.max(0, this.score - 10);
+                this.combo = 0;
+            } else {
+                // Неправильный выбор
+                isCorrect = false;
+                this.combo = 0;
                 this.score = Math.max(0, this.score - 5);
             }
         }
         
-        // Визуальная обратная связь
+        // Унифицированная визуальная обратная связь
         if (isCorrect) {
-            if (choice === 'frontend') {
-                pupaBtn.classList.add('correct');
-                setTimeout(() => pupaBtn.classList.remove('correct'), 300);
-            } else {
-                lupaBtn.classList.add('correct');
-                setTimeout(() => lupaBtn.classList.remove('correct'), 300);
+            // Правильный ответ
+            if (isCommon && this.commonWordButtonsPressed.has('female') && this.commonWordButtonsPressed.has('male')) {
+                // Обе кнопки для общих слов
+                ladaBtn.classList.add('correct');
+                denisBtn.classList.add('correct');
+                setTimeout(() => {
+                    ladaBtn.classList.remove('correct');
+                    denisBtn.classList.remove('correct');
+                }, 300);
+            } else if (choice === 'female') {
+                ladaBtn.classList.add('correct');
+                setTimeout(() => ladaBtn.classList.remove('correct'), 300);
+            } else if (choice === 'male') {
+                denisBtn.classList.add('correct');
+                setTimeout(() => denisBtn.classList.remove('correct'), 300);
+            } else if (choice === 'judge') {
+                judgeBtn.classList.add('correct');
+                setTimeout(() => judgeBtn.classList.remove('correct'), 300);
             }
-            // Вибро-отклик для правильного ответа
             this.vibrate([50]);
         } else {
-            if (choice === 'frontend') {
-                pupaBtn.classList.add('wrong');
-                setTimeout(() => pupaBtn.classList.remove('wrong'), 300);
-            } else {
-                lupaBtn.classList.add('wrong');
-                setTimeout(() => lupaBtn.classList.remove('wrong'), 300);
+            // Неправильный ответ
+            if (choice === 'female') {
+                ladaBtn.classList.add('wrong');
+                setTimeout(() => ladaBtn.classList.remove('wrong'), 300);
+            } else if (choice === 'male') {
+                denisBtn.classList.add('wrong');
+                setTimeout(() => denisBtn.classList.remove('wrong'), 300);
+            } else if (choice === 'judge') {
+                judgeBtn.classList.add('wrong');
+                setTimeout(() => judgeBtn.classList.remove('wrong'), 300);
             }
-            // Вибро-отклик для неправильного ответа
             this.vibrate([200, 100, 200]);
         }
         
@@ -267,14 +411,47 @@ class Game {
             this.updateScore();
             this.updateCombo();
         } else {
-            this.updateScore(); // Обновить счет после штрафа
+            this.updateScore();
         }
         
-        // Очистить текущую технологию только если не в режиме премии
-        if (!this.premiumActive) {
-            this.currentTech = null;
-            document.getElementById('tech-text').textContent = 'Готов?';
-            document.getElementById('tech-badge').classList.remove('premium');
+        // Проверка на проигрыш
+        if (shouldGameOver) {
+            this.gameOver = true;
+            this.endGameWithLoss();
+            return;
+        }
+        
+        // Показать следующее увлечение после выбора
+        // Для общих слов: если нажата только одна кнопка, не показываем следующее сразу (ждем вторую)
+        // Если обе кнопки нажаты или это не общее слово - показываем следующее
+        const bothButtonsPressed = isCommon && this.commonWordButtonsPressed.has('female') && this.commonWordButtonsPressed.has('male');
+        const shouldShowNext = !isCommon || bothButtonsPressed || (isCommon && choice === 'judge');
+        
+        if (shouldShowNext) {
+            // Показать следующее слово
+            this.waitingForChoice = false;
+            setTimeout(() => {
+                if (this.gameActive && !this.gameOver) {
+                    this.showRandomInterest();
+                }
+            }, 500); // Небольшая задержка для визуальной обратной связи
+        } else if (isCommon && !bothButtonsPressed) {
+            // Для общих слов с одной кнопкой - установить таймаут для показа следующего слова
+            if (this.commonWordTimeout) {
+                clearTimeout(this.commonWordTimeout);
+            }
+            this.commonWordTimeout = setTimeout(() => {
+                this.commonWordButtonsPressed.clear();
+                // Показать следующее слово после таймаута ожидания второй кнопки
+                if (this.gameActive && !this.gameOver) {
+                    this.waitingForChoice = false;
+                    setTimeout(() => {
+                        if (this.gameActive && !this.gameOver) {
+                            this.showRandomInterest();
+                        }
+                    }, 100);
+                }
+            }, 500);
         }
     }
     
@@ -323,15 +500,36 @@ class Game {
         if (this.timerInterval) {
             clearInterval(this.timerInterval);
         }
-        if (this.premiumInterval) {
-            clearInterval(this.premiumInterval);
+        if (this.forbiddenWordTimer) {
+            clearTimeout(this.forbiddenWordTimer);
         }
-        
-        // Остановить режим премии
-        this.stopPremiumMode();
+        if (this.commonWordTimeout) {
+            clearTimeout(this.commonWordTimeout);
+        }
         
         // Показать результаты
         this.showResults();
+    }
+    
+    endGameWithLoss() {
+        this.gameActive = false;
+        
+        // Остановить интервалы
+        if (this.techInterval) {
+            clearInterval(this.techInterval);
+        }
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+        }
+        if (this.forbiddenWordTimer) {
+            clearTimeout(this.forbiddenWordTimer);
+        }
+        if (this.commonWordTimeout) {
+            clearTimeout(this.commonWordTimeout);
+        }
+        
+        // Показать экран проигрыша
+        this.showLossScreen();
     }
     
     showResults() {
@@ -355,8 +553,28 @@ class Game {
         
         document.getElementById('result-message').textContent = message;
         
+        // Скрыть сообщение о проигрыше
+        document.getElementById('game-over-message').style.display = 'none';
+        document.getElementById('game-over-image').style.display = 'none'; // Скрыть картинку
+        document.getElementById('result-title').textContent = '🎉 Игра окончена!';
+        
         // Обновить таблицу лидеров
         this.updateLeaderboard();
+    }
+    
+    showLossScreen() {
+        document.getElementById('game-screen').classList.remove('active');
+        document.getElementById('result-screen').classList.add('active');
+        
+        // Показать сообщение о проигрыше
+        document.getElementById('game-over-message').style.display = 'block';
+        document.getElementById('game-over-image').style.display = 'block'; // Показать картинку
+        document.getElementById('result-title').textContent = '💀 Проигрыш!';
+        document.getElementById('final-score').textContent = this.score;
+        document.getElementById('result-message').textContent = 'Вы не осудили запрещенное слово!';
+        
+        // Скрыть таблицу лидеров при проигрыше
+        document.querySelector('.leaderboard').style.display = 'none';
     }
     
     // Переключение темы
@@ -375,40 +593,6 @@ class Game {
         
         // Сохранить настройку
         localStorage.setItem('gameTheme', this.isAcidTheme ? 'acid' : 'normal');
-    }
-    
-    // Обработка кнопки-ловушки
-    trapButtonClicked() {
-        if (!this.gameActive) return;
-        
-        // Штраф за нажатие ловушки
-        this.score = Math.max(0, this.score - 10);
-        this.combo = 0;
-        this.updateScore();
-        this.updateCombo();
-        
-        // Показать комментарий
-        this.showComment('Ой! Это была ловушка! 🍌');
-        
-        // Скрыть кнопку-ловушку
-        this.hideTrapButton();
-        
-        // Вибро-отклик
-        this.vibrate([100, 50, 100]);
-    }
-    
-    // Показать/скрыть кнопку-ловушку
-    showTrapButton() {
-        if (Math.random() < 0.3 && !this.trapButtonVisible) { // 30% шанс
-            this.trapButtonVisible = true;
-            document.getElementById('trap-btn').classList.add('visible');
-            this.showComment('Стоп! Не нажимай эту кнопку! 🚫');
-        }
-    }
-    
-    hideTrapButton() {
-        this.trapButtonVisible = false;
-        document.getElementById('trap-btn').classList.remove('visible');
     }
     
     // Показать комментарий
