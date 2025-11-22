@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Невероятные приключения Пупы и Лупы</title>
+    <title>Солевые проводы</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,9 +14,9 @@
         </div>
         <div class="welcome-container">
             <div class="game-logo">
-                <img src="pupalupa.png" alt="Пупа и Лупа" class="logo-image">
+                <img src="LadaDen.png" alt="Лада и Денис" class="logo-image">
             </div>
-            <h1 class="game-title">🚀 Невероятные приключения Пупы и Лупы</h1>
+            <h1 class="game-title">🚀 Солевые проводы</h1>
             <button id="start-game-btn" class="start-btn">🎮 Начать игру</button>
         </div>
     </div>
@@ -25,40 +25,45 @@
     <div id="game-screen" class="screen">
         <div class="game-header">
             <div class="score">💰 <span id="score">0</span></div>
-            <div class="timer">⏱️ <span id="timer">10</span>с</div>
+            <div class="timer">⏱️ <span id="timer">20</span>с</div>
         </div>
         
         <div class="game-center">
-            <div id="tech-badge" class="tech-badge">
+            <div id="start-ready-btn-container" class="start-ready-container">
+                <button id="start-ready-btn" class="start-ready-btn">🚀 Поехали!</button>
+            </div>
+            <div id="tech-badge" class="tech-badge" style="display: none;">
                 <span id="tech-text">Готов?</span>
             </div>
             <div class="game-instructions">
-                <p id="instruction-text">Нажмите кнопку когда увидите технологию!</p>
+                <p id="instruction-text">Нажмите "Поехали!" чтобы начать!</p>
                 <div class="game-rules">
                     <p><strong>Правила:</strong></p>
-                    <p>• Фронтенд-технологии → "За Пупу"</p>
-                    <p>• Бэкенд-технологии → "За Лупу"</p>
-                    <p>• "Премия" → нажимайте обе кнопки!</p>
+                    <p>• Увлечения Лады → "Лада" 👱‍♀️</p>
+                    <p>• Увлечения Дениса → "Денис" 👨</p>
+                    <p>• Общие слова → обе кнопки = двойной бонус! 🎯</p>
+                    <p>• Запрещенные слова → "Осуждаем!" ⚠️ (только 3 секунды!)</p>
+                    <p>• Следующее слово появляется только после выбора</p>
                     <p>• Неправильный ответ = -5 очков</p>
                 </div>
             </div>
         </div>
 
         <div class="game-controls">
-            <button id="pupa-btn" class="action-btn pupa-btn">
-                <div class="btn-icon">🐺</div>
-                <div class="btn-text">За Пупу</div>
-                <div class="btn-subtitle">Фронтенд</div>
+            <button id="lada-btn" class="action-btn lada-btn">
+                <div class="btn-icon">👱‍♀️</div>
+                <div class="btn-text">Лада</div>
+                <div class="btn-subtitle">Женские увлечения</div>
             </button>
-            <button id="lupa-btn" class="action-btn lupa-btn">
-                <div class="btn-icon">🐺</div>
-                <div class="btn-text">За Лупу</div>
-                <div class="btn-subtitle">Бэкенд</div>
+            <button id="denis-btn" class="action-btn denis-btn">
+                <div class="btn-icon">👨</div>
+                <div class="btn-text">Денис</div>
+                <div class="btn-subtitle">Мужские увлечения</div>
             </button>
-            <button id="trap-btn" class="action-btn trap-btn">
-                <div class="btn-icon">🍌</div>
-                <div class="btn-text">Залупу хд</div>
-                <div class="btn-subtitle">Ловушка!</div>
+            <button id="judge-btn" class="action-btn judge-btn">
+                <div class="btn-icon">⚠️</div>
+                <div class="btn-text">Осуждаем!</div>
+                <div class="btn-subtitle">Запрещенные слова</div>
             </button>
         </div>
         
@@ -77,7 +82,7 @@
     <!-- Экран результатов -->
     <div id="result-screen" class="screen">
         <div class="result-container">
-            <h2>🎉 Игра окончена!</h2>
+            <h2 id="result-title">🎉 Игра окончена!</h2>
             <div class="final-score">
                 <div class="score-display">
                     <span class="score-label">Заработано:</span>
@@ -87,6 +92,12 @@
             </div>
             <div class="result-status">
                 <span id="result-message">Хорошая работа!</span>
+            </div>
+            <div id="game-over-message" class="game-over-message" style="display: none;">
+                <div class="game-over-image-container">
+                    <img src="laden2.png" alt="Проигрыш" class="game-over-image" id="game-over-image">
+                </div>
+                <p class="game-over-text">Владимирский централ, ветер северный...</p>
             </div>
             <div class="leaderboard">
                 <h3>🏆 Лучшие результаты</h3>
