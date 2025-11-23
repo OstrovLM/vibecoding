@@ -90,7 +90,7 @@ body.acid-theme {
 }
 
 .logo-image {
-    max-width: 200px;
+    max-width: 400px;
     width: 100%;
     height: auto;
     border-radius: 20px;
@@ -585,6 +585,8 @@ body.acid-theme {
     padding: 20px;
     max-width: 400px;
     width: 100%;
+    overflow-y: auto;
+    max-height: 100vh;
 }
 
 .result-container h2 {
@@ -629,6 +631,7 @@ body.acid-theme {
     display: flex;
     flex-direction: column;
     gap: 15px;
+    margin-top: 20px;
 }
 
 .play-again-btn, .back-btn {
@@ -656,7 +659,7 @@ body.acid-theme {
 /* Адаптивность для мобильных */
 @media (max-width: 480px) {
     .logo-image {
-        max-width: 150px;
+        max-width: 250px;
     }
     
     .game-title {
@@ -704,7 +707,7 @@ body.acid-theme {
 
 @media (max-width: 360px) {
     .logo-image {
-        max-width: 120px;
+        max-width: 200px;
     }
     
     .game-title {

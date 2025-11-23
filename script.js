@@ -32,7 +32,7 @@ class Game {
         
         // Запрещенные слова
         this.forbiddenWords = [
-            'мариванна', 'белый', 'шишка'
+            'мариванна', 'белый', 'шишка', 'марка', 'ганджубас', 'косячок'
         ];
         
         this.allInterests = [...this.femaleInterests, ...this.maleInterests, ...this.commonWords];
@@ -118,6 +118,16 @@ class Game {
         document.getElementById('start-ready-btn-container').style.display = 'block';
         document.getElementById('tech-badge').style.display = 'none';
         
+        // Скрыть сообщение о проигрыше если оно было показано
+        document.getElementById('game-over-message').style.display = 'none';
+        document.getElementById('game-over-image').style.display = 'none';
+        
+        // Показать таблицу лидеров (на случай если она была скрыта после проигрыша)
+        const leaderboard = document.querySelector('.leaderboard');
+        if (leaderboard) {
+            leaderboard.style.display = 'block';
+        }
+        
         // Сбросить состояние
         this.score = 0;
         this.combo = 0;
@@ -125,6 +135,25 @@ class Game {
         this.gameActive = false;
         this.gameOver = false;
         this.currentTech = null;
+        this.shownWords.clear(); // Сбросить список показанных слов
+        
+        // Остановить все интервалы если они есть
+        if (this.techInterval) {
+            clearInterval(this.techInterval);
+            this.techInterval = null;
+        }
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+        }
+        if (this.forbiddenWordTimer) {
+            clearTimeout(this.forbiddenWordTimer);
+            this.forbiddenWordTimer = null;
+        }
+        if (this.commonWordTimeout) {
+            clearTimeout(this.commonWordTimeout);
+            this.commonWordTimeout = null;
+        }
         
         // Обновить UI
         this.updateScore();
@@ -575,6 +604,12 @@ class Game {
         
         // Скрыть таблицу лидеров при проигрыше
         document.querySelector('.leaderboard').style.display = 'none';
+        
+        // Убедиться, что кнопки действий видны
+        const resultActions = document.querySelector('.result-actions');
+        if (resultActions) {
+            resultActions.style.display = 'flex';
+        }
     }
     
     // Переключение темы
